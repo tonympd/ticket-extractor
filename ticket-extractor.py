@@ -70,22 +70,27 @@ def parse_axs(msg):
         table = msg.find_all("table")[1]
         rows = table.find_all("tr")
 
-        if "Grand Total" in rows[12].find_all("td")[0].text:
-            price = rows[12].find_all("td")[1].text
-        elif "Grand Total" in rows[13].find_all("td")[0].text:
-            price = rows[13].find_all("td")[1].text
+        price = "0"
+        for row in rows:
+            if "Grand Total" in row.find_all("td")[0].text:
+                price = row.find_all("td")[1].text
 
         band = rows[0].find("strong").text.strip()
         date_time = re.search(r'(?<=scheduled on )[^\n]*', rows[0].text.strip()).group(0)
         date = date_time.split(" ")[0].strip()
         time = date_time.split(" ")[1].strip() + date_time.split(" ")[2].strip()
         location = rows[0].text.replace(u'\r\n', " ").strip()
-        #section = rows[0].text
 
         try:
-            sec = rows[4].find_all("td")[3].text
-            row = rows[4].find_all("td")[4].text
-            seat = rows[4].find_all("td")[5].text
+
+            i = 0
+            for r in rows:
+                if "Quantity" in r.find_all("td")[0].text:
+                    section = rows[i + 2].find_all("td")[0].text
+                    sec = rows[i + 2].find_all("td")[3].text
+                    row = rows[i + 2].find_all("td")[4].text.replace("\n", "")
+                    seat = rows[i + 2].find_all("td")[5].text.replace("\n", "")
+                i = i + 1
 
         except:
             sec = "NA"
@@ -98,7 +103,7 @@ def parse_axs(msg):
               'date': date,
               'time': time,
               'venue': location,
-              'section_summary': "N/A",
+              'section_summary': section,
               'section': sec,
               'row': row,
               'seat': seat,
@@ -195,7 +200,7 @@ if True:
 
                         # Determine Message type to parse accordingly
                         # Ticketmaster
-                        if msg_parsed.find("title") is not None:
+                        if "Ticketmaster. All rights reserved." in msg_parsed.text:
 
                             if config.DEBUG:
                                 print('Ticketmaster')
